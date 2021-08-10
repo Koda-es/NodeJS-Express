@@ -1,10 +1,12 @@
+require('module-alias/register');
+
 const express = require('express');
 
 const app = express();
 
-const documentRoutes = require('./src/routes/document.routes');
+const config = require('@config/dotenv');
 
-const port = process.env.PORT || 3000;
+const { HOST: host, PORT: port } = config;
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -14,8 +16,12 @@ app.get('/', (req, res) =>
   res.send('NodeJS Works')
 );
 
+const documentRoutes = require('@routes/document.routes');
+
 app.use('/api/documents', documentRoutes);
 
-app.listen(port, () => 
+const server = app.listen(port, host, () => 
   console.log(`Server is listening on port ${port}`)
 );
+
+module.exports = { app, server };

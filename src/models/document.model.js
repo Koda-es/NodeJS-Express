@@ -1,6 +1,6 @@
 'use strict';
 
-const db = require('./../../config/db.config');
+const db = require('@config/db');
 
 let Document = function (document) {
     this.id = document.id;
@@ -10,39 +10,48 @@ let Document = function (document) {
     this.updated_at = new Date();
 };
 
-Document.getById = (id, result) =>
-    db.query('SELECT * FROM documents WHERE id = ? ', id, 
-        (err, resp) => (err)
-            ? result(err, null)
-            : result(null, resp)
+Document.getById = ({id}, result) => {
+    const callback = (error, response) => (error)
+        ? result(error, null)
+        : result(null, response[0]);
+
+    db.query('SELECT * FROM documents WHERE id = ?', id, callback);
+}
+
+Document.getAll = (result) => {
+    const callback = (error, response) => (error)
+        ? result(error, null)
+        : result(null, response);
+
+    db.query('SELECT * FROM documents', callback);
+}
+
+Document.store = (newDocument, result) => {
+    const callback = (error, response) => (error) 
+        ? result(error, null)
+        : result(null, response.insertId);
+
+    db.query('INSERT INTO documents set ?', newDocument, callback);
+}
+
+Document.update = ({ id, title, description }, result) => {
+    const callback = (error, response) => (error)
+        ? result(error, null)
+        : result(null, null);
+
+    db.query(
+        'UPDATE documents SET title = ?, description = ? WHERE id = ?', 
+        [title, description, id], 
+        callback
     );
+}
 
-Document.getAll = (result) =>
-    db.query('SELECT * FROM documents', 
-        (err, resp) => (err)
-            ? result(err, null)
-            : result(null, resp)
-   );
+Document.delete = (id, result) => {
+    const callback =  (error, response) => (error)
+        ? result(error, null)
+        : result(null, response);
 
-Document.store = (newDocument, result) =>
-   db.query('INSERT INTO documents set ?', newDocument, 
-       (err, resp) => (err) 
-           ? result(err, null)
-           : result(null, resp.insertId)
-   );
-
-Document.update = ({ id, title, description }, result) =>
-    db.query("UPDATE documents SET title = ?, description = ? WHERE id = ?", [title, description, id],
-        (err, resp) => (err)
-            ? result(err, null)
-            : result(null, resp)
-   );
-
-Document.delete = (id, result) =>
-    db.query("DELETE FROM documents WHERE id = ?", [id],
-        (err, resp) => (err)
-            ? result(err, null)
-            : result(null, resp)
-   );
+    db.query('DELETE FROM documents WHERE id = ?', [id], callback);
+}
 
 module.exports = Document;

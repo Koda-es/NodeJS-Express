@@ -2,19 +2,19 @@ const { server } = require('../server');
 
 const { api, initialDocuments } = require('./helpers');
 
-const db = require('@config/db');
-
 const Document = require('@models/document.model');
 
 beforeEach(
     async () => {
-        await db.query('TRUNCATE TABLE documents');
 
+        Document.destroy({
+            where: {},
+            truncate: true
+        });
+        
         for (const document of initialDocuments) 
         {
-            const newDocument = new Document(document);
- 
-            await db.query(`INSERT INTO documents SET ?`, newDocument); 
+            await Document.create({ ... document });
         }
     }
 );
@@ -33,7 +33,7 @@ describe('GET all Documents', () => {
 
 describe('GET Document by ID', () => {
 
-    test('Existing ID', async () => {
+    test('Is posible with existing ID', async () => {
         const response = await api.get('/api/documents/' + 2);
 
         const { document } = response.body;
@@ -41,12 +41,12 @@ describe('GET Document by ID', () => {
         expect(document).not.toBeNull();
     });
 
-    test('No existing ID', async () => {
+    test('Is not posible with no existing ID', async () => {
         const response = await api.get('/api/documents/' + 4);
 
         const { statusCode } = response;
  
-        expect(statusCode).toBe(200);
+        expect(statusCode).toBe(400);
     });
 });
 
@@ -62,10 +62,9 @@ describe('STORE a Document', () => {
         const postResponse = await api.post('/api/documents').send(newDocument);
 
         const { statusCode, body } = postResponse;
-        const { id } = body;
+        const { id } = body.document;
 
         expect(statusCode).toBe(200);
-        expect(id).not.toBeNull();
 
         const getResponse = await api.get(`/api/documents/${id}`);
 

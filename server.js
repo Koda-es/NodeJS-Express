@@ -16,6 +16,12 @@ app.get('/', (req, res) =>
   res.send('NodeJS Works')
 );
 
+const { sequelize } = require('@config/db');
+
+sequelize.sync().then(() =>
+  console.log('Drop and Resync with { force: true }')
+);
+
 const documentRoutes = require('@routes/document.routes');
 
 app.use('/api/documents', documentRoutes);

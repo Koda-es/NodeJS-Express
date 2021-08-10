@@ -1,67 +1,83 @@
-'use strict';
+const Document = require("@models/document.model");
 
-const Document = require('@models/document.model');
 const { documentHasAllData } = require('@validators/document.validator');
 
-exports.getAll = (request, response) => {
+exports.getAll = async (request, response) => {
+    const result = await Document.findAll();
 
-    const callback = (err, documents) => (err)
-        ? response.send(err)
-        : response.send({ documents });
+    response.status(200).json({
+        documents: result
+    });
+};
 
-    Document.getAll(callback);
-}
-
-exports.getById = (request, response) => {
+exports.getById = async (request, response) => {
     const { id } = request.params;
 
-    const callback = (err, document) => (err)
-        ? response.send(err)
-        : response.send({ document });
+    const result = await Document.findByPk(id);
 
-    Document.getById({ id }, callback);
-}
+    if (!result)
+        return response.status(400).send();
+
+    response.status(200).json({
+        document: result
+    });
+};
 
 exports.store = async (request, response) => {
-    const { body } = request;
 
-    const newDocument = new Document(body);
+    const { title, description } = request.body;
 
-    const validationSuccess = await documentHasAllData(newDocument);
+    const validationSuccess = await documentHasAllData({
+        title, description
+    });
 
     if (!validationSuccess)
-        return response.status(400).json({ error: true });
+        return response.status(400).send();
 
-    const callback =  (err, id) => (err) 
-        ? response.send(err)
-        : response.json({ error: false, id });
+    const result = await Document.create({
+        title: title,
+        description: description,
+    });
 
-    Document.store(newDocument, callback);
+    response.status(200).json({
+        document: result
+    });
 };
+
 
 exports.update = async (request, response) => {
-    const { body } = request;
-
-    const newDocument = new Document(body);
-
-    const validationSuccess = await documentHasAllData(newDocument);
-
-    if (!validationSuccess)
-        return response.status(400).json({ error: true });
-
-    const callback = err => (err)
-        ? response.send(err)
-        : response.json({ error: false });
-
-    Document.update(newDocument, callback);
-};
-
-exports.delete = (request, response) => {
     const { id } = request.params;
 
-    const callback = err => (err) 
-        ? response.send(err)
-        : response.json({ error: false });
+    const { title, description } = request.body;
 
-    Document.delete(id, callback);
-}
+    const validationSuccess = await documentHasAllData({
+        title, description
+    });
+
+    if (!validationSuccess)
+        return response.status(400).send();
+
+    const result = await Document.update(
+        {
+            title: title,
+            description: description,
+        },
+        {
+            where: { id: id },
+        }
+    )
+
+    response.status(200).json({
+        document: result
+    });
+};
+
+exports.delete = async (request, response) => {
+    const { id } = request.params;
+
+    const result = await Document.destroy({
+        where: { id: id },
+    })
+
+    response.status(200).send();
+};

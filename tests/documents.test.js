@@ -1,21 +1,30 @@
 const { server } = require('../server');
 
-const { api, initialDocuments } = require('./helpers');
+const { api, initialUsers, initialDocuments } = require('./helpers');
 
 const Document = require('@models/document.model');
+const User = require('@models/user.model');
+
+const { sequelize } = require('@config/db');
 
 beforeEach(
     async () => {
+        await sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true });
 
-        Document.destroy({
-            where: {},
-            truncate: true
-        });
-        
+        await Document.sync({ force: true });
+        await User.sync({ force: true });
+
+        for (const user of initialUsers) 
+        {
+            await User.create(user);
+        }
+
         for (const document of initialDocuments) 
         {
-            await Document.create({ ... document });
+            await Document.create(document);
         }
+
+        await sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { raw: true });
     }
 );
 
@@ -46,17 +55,18 @@ describe('GET Document by ID', () => {
 
         const { statusCode } = response;
  
-        expect(statusCode).toBe(400);
+        expect(statusCode).toBe(404);
     });
 });
 
 
 describe('STORE a Document', () => {
-    test('Is possible with good parameters', async () => {
+    test('Is possible with good Parameters and existing User', async () => {
 
         const newDocument = {
             title: 'New document title',
             description: 'New document description',
+            userId: 1,
         };
 
         const postResponse = await api.post('/api/documents').send(newDocument);
@@ -74,7 +84,7 @@ describe('STORE a Document', () => {
         expect(description).toBe(newDocument.description);
     });
 
-    test('Is not possible with bad parameters', async () => {
+    test('Is not possible with bad Parameters', async () => {
 
         const newDocument = {
           title: '',
@@ -85,8 +95,26 @@ describe('STORE a Document', () => {
 
         const { statusCode } = response;
         
-        expect(statusCode).toBe(400);
+        expect(statusCode).toBe(409);
+    });
+
+    test('Is not possible with no existing User', async () => {
+
+        const newDocument = {
+            title: 'New document title',
+            description: 'New document description',
+            userId: 4,
+        };
+
+        const response = await api.post('/api/documents').send(newDocument);
+
+        const { statusCode } = response;
+        
+        expect(statusCode).toBe(500);
     });
 });
 
-afterAll(() => server.close());
+afterAll(() => {
+    server.close();
+    sequelize.close();
+});

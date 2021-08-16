@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "test": "jest --silent=false",
+    "test": "jest --silent=false --verbose",
     "test:watch": "npm run test -- --watch",
     "dev": "set NODE_ENV=development&& node server.js",
     "prod": "set NODE_ENV=production&& node server.js"
@@ -44,11 +44,13 @@
       "^@models(.*)$": "<rootDir>/src/models$1",
       "^@routes(.*)$": "<rootDir>/src/routes$1",
       "^@validators(.*)$": "<rootDir>/src/validators$1",
+      "^@middlewares(.*)$": "<rootDir>/src/middlewares$1",
       "^@config(.*)$": "<rootDir>/config$1"
     }
   },
   "_moduleAliases": {
     "@controllers": "./src/controllers",
+    "@middlewares": "./src/middlewares",
     "@models": "./src/models",
     "@routes": "./src/routes",
     "@validators": "./src/validators",

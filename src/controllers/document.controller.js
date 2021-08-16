@@ -1,83 +1,89 @@
-const Document = require("@models/document.model");
+const Document = require('@models/document.model');
 
-const { documentHasAllData } = require('@validators/document.validator');
+exports.getAll = (request, response, next) => {
 
-exports.getAll = async (request, response) => {
-    const result = await Document.findAll();
+    const onSuccess = (result, response) => 
+        response.status(200).json({ documents: result });
 
-    response.status(200).json({
-        documents: result
-    });
+    const config = {
+        order: [
+            ['id', 'DESC']
+        ]
+    };
+
+    Document.findAll(config)
+        .then(result => onSuccess(result, response))
+        .catch(error => next(error));
 };
 
-exports.getById = async (request, response) => {
+exports.getById = (request, response, next) => {
     const { id } = request.params;
 
-    const result = await Document.findByPk(id);
-
-    if (!result)
-        return response.status(400).send();
-
-    response.status(200).json({
-        document: result
-    });
+    const onSuccess = (result, response) => 
+        (!result)
+            ? response.status(404).send()
+            : response.status(200).json({ document: result });
+    
+    Document.findByPk(id)
+        .then(result => onSuccess(result, response))
+        .catch(error => next(error));
 };
 
-exports.store = async (request, response) => {
+exports.store = (request, response, next) => {
 
-    const { title, description } = request.body;
+    const { title, description, userId } = request.body;
 
-    const validationSuccess = await documentHasAllData({
-        title, description
-    });
-
-    if (!validationSuccess)
-        return response.status(400).send();
-
-    const result = await Document.create({
+    const onSuccess = (result, response) => 
+        response.status(200).json({ document: result });
+    
+    const data = {
         title: title,
         description: description,
-    });
+        userId: userId
+    };
 
-    response.status(200).json({
-        document: result
-    });
+    Document.create(data)
+        .then(result => onSuccess(result, response))
+        .catch(error => next(error));
 };
 
 
-exports.update = async (request, response) => {
+exports.update = (request, response, next) => {
     const { id } = request.params;
 
-    const { title, description } = request.body;
+    const { title, description, userId } = request.body;
 
-    const validationSuccess = await documentHasAllData({
-        title, description
-    });
+    const data = {
+        title: title,
+        description: description
+    };
 
-    if (!validationSuccess)
-        return response.status(400).send();
-
-    const result = await Document.update(
-        {
-            title: title,
-            description: description,
+    const config = {
+        where: { 
+            id: id,
+            userId: userId
         },
-        {
-            where: { id: id },
-        }
-    )
+    };
+    
+    const onSuccess = (result, response) => 
+        response.status(200).json({ document: result });
 
-    response.status(200).json({
-        document: result
-    });
+    Document.update(data, config)
+        .then(result => onSuccess(result, response))
+        .catch(error => next(error));
 };
 
-exports.delete = async (request, response) => {
+exports.delete = (request, response, next) => {
     const { id } = request.params;
 
-    const result = await Document.destroy({
-        where: { id: id },
-    })
+    const onSuccess = (result, response) => 
+        response.status(200).send();
 
-    response.status(200).send();
+    const config = {
+        where: { id: id }
+    };
+
+    Document.destroy(config)
+    .then(result => onSuccess(result, response))
+    .catch(error => next(error));
 };

@@ -9,7 +9,6 @@ const Sequelize = require('sequelize');
 const sequelize = new Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
   dialect: 'mysql',
-  operatorsAliases: false,
   logging: false
 });
 
